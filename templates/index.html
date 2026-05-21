@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSL Score Predictor | SZABIST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:   #00c853;
+      --green2:  #00e676;
+      --dark:    #0d1117;
+      --card:    #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #388bfd;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0d2a1a 0%, #0d1117 60%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.2rem 0;
+    }
+    .logo-ball {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--green), var(--green2));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 0 20px rgba(0,200,83,.4);
+    }
+    .header-title h1 { font-size: 1.25rem; font-weight: 700; }
+    .header-title p  { font-size: .78rem; color: var(--muted); margin-top: 1px; }
+    .badge {
+      margin-left: auto;
+      background: rgba(0,200,83,.1);
+      border: 1px solid rgba(0,200,83,.3);
+      color: var(--green2);
+      padding: .3rem .8rem;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Layout ────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── Stats bar ─────────────────────────────────── */
+    .stats-bar {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.4rem;
+      flex: 1; min-width: 150px;
+      text-align: center;
+    }
+    .stat-card .val { font-size: 1.6rem; font-weight: 800; color: var(--green2); }
+    .stat-card .lbl { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Main grid ─────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 720px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Cards ─────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.6rem;
+    }
+    .card-title {
+      font-size: .85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .card-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    /* ── Form ──────────────────────────────────────── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: .8rem; color: var(--muted); font-weight: 500; }
+    select, input[type="number"] {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .55rem .8rem;
+      font-size: .9rem;
+      font-family: inherit;
+      width: 100%;
+      transition: border-color .2s;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0,200,83,.1);
+    }
+    select option { background: #161b22; }
+
+    /* ── Over slider ───────────────────────────────── */
+    .slider-row { display: flex; align-items: center; gap: .8rem; }
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--green);
+      cursor: pointer;
+    }
+    .slider-val {
+      min-width: 2.5rem;
+      text-align: center;
+      font-weight: 700;
+      color: var(--green2);
+      font-size: 1.1rem;
+    }
+
+    /* ── Predict button ────────────────────────────── */
+    .btn-predict {
+      width: 100%;
+      margin-top: 1.4rem;
+      padding: .85rem;
+      background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+      color: #0d1117;
+      font-weight: 800;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: .04em;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-predict:hover  { opacity: .9; }
+    .btn-predict:active { transform: scale(.98); }
+    .btn-predict:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Result card ───────────────────────────────── */
+    #result-card { display: none; }
+    #result-card.show { display: block; }
+
+    .score-display {
+      text-align: center;
+      padding: 1rem 0 1.4rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.2rem;
+    }
+    .score-label { font-size: .8rem; color: var(--muted); margin-bottom: .4rem; }
+    .score-big {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .score-range {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-top: .5rem;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .8rem;
+    }
+    .info-item {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .8rem 1rem;
+      text-align: center;
+    }
+    .info-item .iv { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .info-item .il { font-size: .73rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Progress bar ──────────────────────────────── */
+    .progress-section { margin-top: 1.2rem; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: .78rem; color: var(--muted); margin-bottom: .4rem;
+    }
+    .progress-bar-bg {
+      background: #0d1117;
+      border-radius: 8px;
+      height: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--green2));
+      border-radius: 8px;
+      transition: width .8s ease;
+    }
+
+    /* ── Alerts ────────────────────────────────────── */
+    .alert {
+      padding: .8rem 1rem;
+      border-radius: 8px;
+      font-size: .85rem;
+      margin-top: 1rem;
+    }
+    .alert-err  { background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3); color: #f85149; }
+    .alert-info { background: rgba(56,139,253,.1); border: 1px solid rgba(56,139,253,.3); color: var(--accent); }
+
+    /* ── Footer ────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: .78rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    /* ── Loading spinner ────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #0d1117;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: .4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── History ────────────────────────────────────── */
+    .history-list { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+    .history-item {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .6rem .9rem;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: .82rem;
+    }
+    .history-item .hs { color: var(--green2); font-weight: 700; }
+    .no-history { color: var(--muted); font-size: .85rem; text-align: center; padding: 1rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="logo-ball">🏏</div>
+    <div class="header-title">
+      <h1>PSL Score Predictor</h1>
+      <p>Real-Time 1st Innings Score Prediction · SZABIST ML Project</p>
+    </div>
+    <div class="badge">RF Model · R²=99.08%</div>
+  </div>
+</header>
+
+<!-- ── Page ────────────────────────────────────────────────────────────────── -->
+<div class="page">
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="val">{{ model_stats.accuracy }}</div>
+      <div class="lbl">Model Accuracy (R²)</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">±{{ model_stats.mae }}</div>
+      <div class="lbl">Mean Abs. Error (runs)</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">6</div>
+      <div class="lbl">PSL Teams</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">7</div>
+      <div class="lbl">Venues</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">22 K+</div>
+      <div class="lbl">Training Records</div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- ── Input Card ─────────────────────────────── -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Match Inputs</div>
+
+      <div class="form-row">
+        <!-- Venue -->
+        <div class="form-group full">
+          <label>📍 Venue</label>
+          <select id="venue">
+            {% for v in venues %}
+            <option value="{{ v }}">{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Team -->
+        <div class="form-group">
+          <label>🏏 Batting Team</label>
+          <select id="team">
+            {% for t in teams %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Opposition -->
+        <div class="form-group">
+          <label>⚔️ Opposition</label>
+          <select id="opposition">
+            {% for t in teams %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Over number (slider) -->
+        <div class="form-group full">
+          <label>🔢 Over Number (5 – 19)</label>
+          <div class="slider-row">
+            <input type="range" id="over_slider" min="5" max="19" value="10"
+                   oninput="document.getElementById('over_num').value=this.value;
+                            document.getElementById('over_display').textContent=this.value;" />
+            <span class="slider-val" id="over_display">10</span>
+            <input type="number" id="over_num" value="10" min="5" max="19"
+                   style="width:70px;"
+                   oninput="document.getElementById('over_slider').value=this.value;
+                            document.getElementById('over_display').textContent=this.value;" />
+          </div>
+        </div>
+
+        <!-- Ball number -->
+        <div class="form-group">
+          <label>🔴 Ball Number (1 – 6)</label>
+          <input type="number" id="ball_number" value="3" min="1" max="6" />
+        </div>
+
+        <!-- Current Runs -->
+        <div class="form-group">
+          <label>📊 Current Runs</label>
+          <input type="number" id="current_run" value="85" min="0" max="300" />
+        </div>
+
+        <!-- Wickets Left -->
+        <div class="form-group">
+          <label>🚨 Wickets Left</label>
+          <input type="number" id="wickets_left" value="7" min="0" max="10" />
+        </div>
+
+        <!-- Runs till 5 overs -->
+        <div class="form-group">
+          <label>⚡ Runs in First 5 Overs</label>
+          <input type="number" id="runs_till_5" value="40" min="0" max="150" />
+        </div>
+      </div>
+
+      <button class="btn-predict" id="predict-btn" onclick="predict()">
+        Predict Final Score
+      </button>
+
+      <div id="error-msg"></div>
+    </div>
+
+    <!-- ── Result + History Column ────────────────── -->
+    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+
+      <!-- Result Card -->
+      <div class="card" id="result-card">
+        <div class="card-title"><span class="dot"></span> Prediction Result</div>
+
+        <div class="score-display">
+          <div class="score-label">Predicted Final Score</div>
+          <div class="score-big" id="score-val">–</div>
+          <div class="score-range" id="score-range"></div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="iv" id="ri-rr">–</div>
+            <div class="il">Current Run Rate</div>
+          </div>
+          <div class="info-item">
+            <div class="iv" id="ri-prr">–</div>
+            <div class="il">Projected RR (rest)</div>
+          </div>
+          <div class="info-item">
+            <div class="iv" id="ri-runs-left">–</div>
+            <div class="il">Runs Expected Ahead</div>
+          </div>
+          <div class="info-item">
+            <div class="iv" id="ri-balls">–</div>
+            <div class="il">Balls Remaining</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-label">
+            <span>Innings Progress</span>
+            <span id="prog-pct">–</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="prog-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Card -->
+      <div class="card">
+        <div class="card-title"><span class="dot"></span> Prediction History</div>
+        <ul class="history-list" id="history-list">
+          <li class="no-history" id="no-history-msg">No predictions yet.</li>
+        </ul>
+      </div>
+
+    </div><!-- end right column -->
+  </div><!-- end main-grid -->
+</div><!-- end page -->
+
+<footer>
+  SZABIST – Dept. of Robotics & Artificial Intelligence &nbsp;·&nbsp;
+  Machine Learning Lab · PSL Score Predictor &nbsp;·&nbsp;
+  Random Forest Regressor trained on 22 K+ PSL records
+</footer>
+
+<script>
+  let history = [];
+
+  async function predict() {
+    const btn = document.getElementById('predict-btn');
+    const errDiv = document.getElementById('error-msg');
+    errDiv.innerHTML = '';
+
+    const venue       = document.getElementById('venue').value;
+    const team        = document.getElementById('team').value;
+    const opposition  = document.getElementById('opposition').value;
+    const over_number = document.getElementById('over_num').value;
+    const ball_number = document.getElementById('ball_number').value;
+    const current_run = document.getElementById('current_run').value;
+    const wickets_left= document.getElementById('wickets_left').value;
+    const runs_till_5 = document.getElementById('runs_till_5').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Predicting…';
+
+    try {
+      const res = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venue, team, opposition, over_number, ball_number,
+                               current_run, wickets_left, runs_till_5_over: runs_till_5 })
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        errDiv.innerHTML = `<div class="alert alert-err">⚠️ ${data.error || 'Prediction failed.'}</div>`;
+        return;
+      }
+
+      // Fill result card
+      document.getElementById('score-val').textContent = data.predicted_score;
+      document.getElementById('score-range').textContent =
+        `Range: ${data.predicted_score - 10} – ${data.predicted_score + 10}`;
+      document.getElementById('ri-rr').textContent = data.run_rate;
+      document.getElementById('ri-prr').textContent = data.projected_rr;
+      document.getElementById('ri-runs-left').textContent = data.runs_to_come;
+      document.getElementById('ri-balls').textContent = data.balls_remaining;
+
+      // Progress bar
+      const overs = parseFloat(over_number);
+      const pct = Math.round((overs / 20) * 100);
+      document.getElementById('prog-pct').textContent = pct + '%';
+      document.getElementById('prog-bar').style.width = pct + '%';
+
+      // Show result
+      const rc = document.getElementById('result-card');
+      rc.classList.add('show');
+
+      // History
+      document.getElementById('no-history-msg')?.remove();
+      const li = document.createElement('li');
+      li.className = 'history-item';
+      li.innerHTML = `
+        <span>${team} vs ${opposition} · Ov ${over_number}.${ball_number}</span>
+        <span class="hs">${data.predicted_score}</span>`;
+      document.getElementById('history-list').prepend(li);
+
+    } catch (e) {
+      errDiv.innerHTML = `<div class="alert alert-err">⚠️ Network error: ${e.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Predict Final Score';
+    }
+  }
+
+  // Keep same team/opp check
+  document.addEventListener('DOMContentLoaded', () => {
+    const t = document.getElementById('team');
+    const o = document.getElementById('opposition');
+    // default opp to second team
+    o.selectedIndex = 1;
+  });
+</script>
+</body>
+</html>
